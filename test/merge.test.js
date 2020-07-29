@@ -109,3 +109,57 @@ test("MERGE_FILTER_AUTHOR when set but do not match current author should not me
   // WHEN
   expect(await merge({ config, octokit }, pr)).toEqual(false);
 });
+
+test("MERGE_REQUIRE_STATUSES when not set should not block merge", async () => {
+  // GIVEN
+  const pr = pullRequest();
+  pr.statuses = [
+    {"context": "lint", "state": "success"},
+    {"context": "tests", "state": "pending"},
+  ];
+
+  const config = createConfig({
+    MERGE_COMMIT_MESSAGE: "pull-request-title-and-description",
+  });
+
+  // WHEN
+  expect(await merge({ config, octokit }, pr)).toEqual(true);
+});
+
+test("MERGE_REQUIRE_STATUSES should block merge if not satisfied", async () => {
+  // GIVEN
+  const pr = pullRequest();
+  pr.statuses = [
+    {"context": "lint", "state": "success"},
+    {"context": "tests", "state": "pending"},
+  ];
+
+  // WHEN
+  const configSuccess = createConfig({
+    MERGE_COMMIT_MESSAGE: "pull-request-title-and-description",
+    MERGE_REQUIRE_STATUSES: "lint"
+  });
+
+  expect(await merge({ configSuccess, octokit }, pr)).toEqual(true);
+
+  const configPending = createConfig({
+    MERGE_COMMIT_MESSAGE: "pull-request-title-and-description",
+    MERGE_REQUIRE_STATUSES: "tests"
+  });
+
+  expect(await merge({ configPending, octokit }, pr)).toEqual(false);
+
+  const configPendingAndSuccess = createConfig({
+    MERGE_COMMIT_MESSAGE: "pull-request-title-and-description",
+    MERGE_REQUIRE_STATUSES: "tests,lint"
+  });
+
+  expect(await merge({ configPendingAndSuccess, octokit }, pr)).toEqual(false);
+
+  const configAbsent = createConfig({
+    MERGE_COMMIT_MESSAGE: "pull-request-title-and-description",
+    MERGE_REQUIRE_STATUSES: "whatami"
+  });
+
+  expect(await merge({ configAbsent, octokit }, pr)).toEqual(false);
+});
