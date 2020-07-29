@@ -133,6 +133,10 @@ The following merge options are supported:
   repositories. Set this option to `true` to automatically delete branches
   after they have been merged.
 
+- `MERGE_REQUIRE_STATUSES`: List of extra statuses/checks to require before
+  automerging. Protected branches can already require some checks -- this
+  option allows further restricting when _automerges_ may occur.
+
 The following update options are supported:
 
 - `UPDATE_LABELS`: The labels that need to be present for a pull request to be
